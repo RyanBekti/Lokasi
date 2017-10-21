@@ -25,8 +25,10 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingEvent;
 
 public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
@@ -43,7 +45,27 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         // Get the Geofence Event from the Intent sent through
+        GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
+        if (geofencingEvent.hasError()) {
+            Log.e(TAG, String.format("Error code : %d", geofencingEvent.getErrorCode()));
+            return;
+        }
 
+        // Get the transition type.
+        int geofenceTransition = geofencingEvent.getGeofenceTransition();
+        // Check which transition type has triggered this event
+        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
+            setRingerMode(context, AudioManager.RINGER_MODE_SILENT);
+        } else if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+            setRingerMode(context, AudioManager.RINGER_MODE_NORMAL);
+        } else {
+            // Log the error.
+            Log.e(TAG, String.format("Unknown transition : %d", geofenceTransition));
+            // No need to do anything else
+            return;
+        }
+        // Send the notification
+        sendNotification(context, geofenceTransition);
     }
 
 

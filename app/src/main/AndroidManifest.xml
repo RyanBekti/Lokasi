@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="id.sch.smktelkom_mlg.learn.xiirpl129.lokasi">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Lokasi"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name="id.sch.smktelkom_mlg.learn.xiirpl129.lokasi.provider.PlaceContentProvider"
+            android:authorities="com.example.android.shushme"
+            android:exported="false" />
+
+        <receiver android:name=".GeofenceBroadcastReceiver" />
+
+    </application>
+
+
+</manifest>

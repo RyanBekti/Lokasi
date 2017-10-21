@@ -2,6 +2,7 @@ package id.sch.smktelkom_mlg.learn.xiirpl129.lokasi;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -15,6 +16,8 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -25,6 +28,7 @@ import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceBuffer;
 import com.google.android.gms.location.places.Places;
@@ -68,9 +72,32 @@ public class MainActivity extends AppCompatActivity implements
         mRecyclerView.setAdapter(mAdapter);
 
         // Initialize the switch state and Handle enable/disable switch change
+        Switch onOffSwitch = (Switch) findViewById(R.id.enable_switch);
+        mIsEnabled = getPreferences(MODE_PRIVATE).getBoolean(getString(R.string.setting_enabled), false);
+        onOffSwitch.setChecked(mIsEnabled);
+        onOffSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                SharedPreferences.Editor editor = getPreferences(MODE_PRIVATE).edit();
+                editor.putBoolean(getString(R.string.setting_enabled), isChecked);
+                mIsEnabled = isChecked;
+                editor.commit();
+                if (isChecked) mGeofencing.registerAllGeofences();
+                else mGeofencing.unRegisterAllGeofences();
+            }
 
+        });
 
         // Build up the LocationServices API client
+        mClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .addApi(Places.GEO_DATA_API)
+                .enableAutoManage(this, this)
+                .build();
+
+        mGeofencing = new Geofencing(this, mClient);
         // Uses the addApi method to request the LocationServices API
         // Also uses enableAutoManage to automatically when to connect/suspend the client
 
@@ -178,7 +205,8 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onResult(@NonNull PlaceBuffer places) {
                 mAdapter.swapPlaces(places);
-
+                mGeofencing.updateGeofencesList(places);
+                if (mIsEnabled) mGeofencing.registerAllGeofences();
             }
         });
     }
